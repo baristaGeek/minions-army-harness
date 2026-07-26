@@ -122,7 +122,16 @@ Rules:
 
 ## Configuration
 
-Configuration is loaded from `user_data/config.yml` through the typed YAML schema in `minions_army/core/config/schema.py`.
+Configuration is loaded through the typed YAML schema in `minions_army/core/config/schema.py`. Two
+processes read two different files:
+
+- The **API** defaults to `user_data/api/config.yml` (`DEFAULT_USER_CONFIG` in
+  `minions_army/core/config/defaults.py`).
+- The **minion** reads `user_data/orchestrator/config.yml`, set as `MINIONS_CONFIG_PATH` in
+  `Dockerfile.minion`.
+
+Either can be overridden with the `MINIONS_CONFIG_PATH` environment variable, or with `--config` on
+the `minion-orchestrator` entrypoint.
 
 Common sections:
 
@@ -136,9 +145,9 @@ Common sections:
 - `reviewer`
 - `deploy`
 
-Secrets can be configured as concrete values in `user_data/config.yml` or through
+Secrets can be configured as concrete values in the active config file or through
 explicit YAML placeholders. For remote minion images, concrete values are simpler
-because `user_data/config.yml` is copied into the image. Providers and runtime
+because `user_data/` is copied into the image. Providers and runtime
 adapters translate configured values to CLI environment variables only at
 subprocess boundaries.
 
