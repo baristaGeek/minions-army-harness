@@ -8,11 +8,11 @@ Send it a plain-English request ("add a dark theme to the app", "add a merchant 
 
 ### Tier 1 — run it locally
 
-You need an **Anthropic API key** and a **GitHub token** for a repo you own (fork this one — the
+You need an **Anthropic/OpenAI/Kimi API key** and a **GitHub token** for a repo you own (fork this one — the
 minion works against the bundled [`sample-app/`](sample-app/)).
 
 ```bash
-export ANTHROPIC_API_KEY=sk-ant-...
+export ANTHROPIC_API_KEY=sk-ant-... // or OPENAI_API_KEY // or KIMI_API_KEY
 export GITHUB_TOKEN=ghp_...
 export REPOSITORY_NAME=your-username/minions-army-harness   # a repo your token can push to
 
