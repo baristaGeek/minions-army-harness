@@ -28,7 +28,7 @@ Accept a Slack text-message webhook, store the message in PostgreSQL, and start 
 - Database migrations have been applied.
 - The API process can access the Docker daemon when minion execution is required.
 - The minion image has been built.
-- `repository.name` in `user_data/config.yml` points to a cloneable repository.
+- `repository.name` in `user_data/api/config.yml` points to a cloneable repository.
 
 ### Main Flow
 

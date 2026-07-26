@@ -11,21 +11,33 @@ This guide explains how to run Minions Army locally, run it with Docker Compose,
 
 ## Runtime Config
 
-Create or edit the runtime YAML config before running the application:
+Two processes read two different config files, and both are already present in the repo:
+
+| File | Read by | How it is resolved |
+|------|---------|--------------------|
+| `user_data/api/config.yml` | the API | default (`DEFAULT_USER_CONFIG`), mounted by `docker-compose.yml` |
+| `user_data/orchestrator/config.yml` | the minion | `MINIONS_CONFIG_PATH` in `Dockerfile.minion` |
+
+Edit those files in place. For a config from scratch, start from
+`user_data/config.example.yml` and point at it explicitly — copying it to
+`user_data/config.yml` has no effect, because nothing reads that path:
 
 ```bash
-cp user_data/config.example.yml user_data/config.yml
+cp user_data/config.example.yml user_data/api/config.yml
 ```
 
 On Windows PowerShell:
 
 ```powershell
-Copy-Item user_data\config.example.yml user_data\config.yml
+Copy-Item user_data\config.example.yml user_data\api\config.yml
 ```
+
+Either path can be overridden with the `MINIONS_CONFIG_PATH` environment variable, or with `--config`
+on the `minion-orchestrator` entrypoint.
 
 Important settings are grouped under `database`, `slack`, `repository`, `agent`, `workflow`, `launcher`, `verification`, `reviewer`, and `deploy`.
 
-For remote minion images, prefer concrete values in `user_data/config.yml`
+For remote minion images, prefer concrete values in `user_data/orchestrator/config.yml`
 because that file is copied into the image. If you use placeholders, the same
 environment variables must exist inside the minion runtime.
 
@@ -210,7 +222,7 @@ make coverage
 
 ## Troubleshooting
 
-If the API cannot connect to the database, verify `database.url` in `user_data/config.yml`, confirm PostgreSQL is running, and apply migrations with `alembic upgrade head`.
+If the API cannot connect to the database, verify `database.url` in `user_data/api/config.yml`, confirm PostgreSQL is running, and apply migrations with `alembic upgrade head`.
 
 If the minion container exits immediately, inspect its logs with `docker logs <minion_container_name>`.
 

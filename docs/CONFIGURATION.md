@@ -1,24 +1,34 @@
 # Configuration Guide
 
-Minions Army is configured from YAML. The runtime should read configuration
-from `user_data/config.yml`; do not duplicate static configuration as launcher
+Minions Army is configured from YAML; do not duplicate static configuration as launcher
 environment variables.
+
+Two processes read two different files, both already checked into the repo:
+
+| File | Read by | How it is resolved |
+|------|---------|--------------------|
+| `user_data/api/config.yml` | the API | default (`DEFAULT_USER_CONFIG`), mounted by `docker-compose.yml` |
+| `user_data/orchestrator/config.yml` | the minion | `MINIONS_CONFIG_PATH` in `Dockerfile.minion` |
+
+Either can be overridden with the `MINIONS_CONFIG_PATH` environment variable, or with `--config` on
+the `minion-orchestrator` entrypoint. Note that `user_data/config.yml` is not read by anything —
+copying the example there has no effect.
 
 ## Quick Start
 
-1. Copy the example config:
+1. Edit the config in place, or start from the example:
 
 ```bash
-cp user_data/config.example.yml user_data/config.yml
+cp user_data/config.example.yml user_data/api/config.yml
 ```
 
 On Windows PowerShell:
 
 ```powershell
-Copy-Item user_data\config.example.yml user_data\config.yml
+Copy-Item user_data\config.example.yml user_data\api\config.yml
 ```
 
-2. Fill in concrete values in `user_data/config.yml`.
+2. Fill in concrete values.
 
 ```yaml
 database:
@@ -41,13 +51,13 @@ docker-compose up -d
 ```
 
 For Fly minion images, rebuild and push the minion image whenever
-`user_data/config.yml`, providers, or pipeline definitions change.
+`user_data/orchestrator/config.yml`, providers, or pipeline definitions change.
 
 ## Config Ownership Rule
 
-`user_data/config.yml` is the source of truth for runtime configuration. For
-remote minion images, prefer concrete values in this file because `user_data/`
-is copied into the image at build time.
+The two config files above are the source of truth for runtime configuration. For
+remote minion images, prefer concrete values in `user_data/orchestrator/config.yml`
+because `user_data/` is copied into the image at build time.
 
 YAML placeholders such as `${DATABASE_URL}` and `${GITHUB_TOKEN}` are supported
 by the loader, but they only work when those variables are present in the
@@ -57,9 +67,9 @@ resolve to empty strings.
 
 This keeps the config contract simple:
 
-- Static settings should live in `user_data/config.yml`.
+- Static settings should live in the config file for the process that reads them.
 - The minion image copies `user_data/` into `/app/user_data`.
-- The minion reads `/app/user_data/config.yml` on startup.
+- The minion reads `/app/user_data/orchestrator/config.yml` on startup.
 - The launcher should not reconstruct static config as environment variables.
 
 Environment variables are only used at hard runtime boundaries:
@@ -275,7 +285,7 @@ package `@moonshot-ai/kimi-code` using the `KIMI_CODE_VERSION` build argument.
 
 The provider uses the checked-in template at
 `user_data/kimi_code_home/config.toml`, replaces `${KIMI_API_KEY}` with
-`agent.kimi_api_key` from `user_data/config.yml` or the `KIMI_API_KEY`
+`agent.kimi_api_key` from the active config file or the `KIMI_API_KEY`
 environment variable, and writes the final file to Kimi's default home:
 
 ```text
@@ -456,20 +466,21 @@ Pipeline rules:
 COPY user_data ./user_data
 ```
 
-Because of that, changes to `user_data/config.yml`, providers, Kimi's
+Because of that, changes to `user_data/orchestrator/config.yml`, providers, Kimi's
 `user_data/kimi_code_home/config.toml` template, or pipeline files require a
 minion image rebuild before Fly Machines or other remote launchers see them.
 
-Docker Compose bind-mounts `user_data/config.yml`, so local compose runs can see
-config changes without rebuilding the image.
+Docker Compose bind-mounts `user_data/api/config.yml`, so local compose runs pick up
+API config changes without rebuilding the image. The minion's config is baked into
+the image, so changes there still need `docker compose build`.
 
 ## Troubleshooting
 
 ### `database.url is required`
 
 Your minion config probably contains an empty `database.url` or an old env
-placeholder. Set a concrete database URL in `user_data/config.yml` and rebuild
-the minion image.
+placeholder. Set a concrete database URL in `user_data/orchestrator/config.yml` and
+rebuild the minion image.
 
 ### Provider says an agent key is required
 

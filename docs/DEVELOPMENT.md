@@ -36,19 +36,20 @@ Install development dependencies:
 pip install -r requirements-dev.txt
 ```
 
-Create or edit the runtime YAML config:
+Edit the runtime YAML config. The API reads `user_data/api/config.yml`; the minion reads
+`user_data/orchestrator/config.yml`. Both are checked in. To start from the example instead:
 
 ```bash
-cp user_data/config.example.yml user_data/config.yml
+cp user_data/config.example.yml user_data/api/config.yml
 ```
 
 On Windows PowerShell:
 
 ```powershell
-Copy-Item user_data\config.example.yml user_data\config.yml
+Copy-Item user_data\config.example.yml user_data\api\config.yml
 ```
 
-Review `user_data/config.yml` before running the application.
+Review `user_data/api/config.yml` before running the application.
 
 ## Database
 
@@ -240,7 +241,7 @@ taskkill /PID <PID> /F
 If database connection fails:
 
 - Confirm PostgreSQL is running.
-- Confirm `database.url` in `user_data/config.yml`.
+- Confirm `database.url` in `user_data/api/config.yml`.
 - Apply migrations with `alembic upgrade head`.
 
 If Docker minion execution fails:

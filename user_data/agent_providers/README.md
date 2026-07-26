@@ -11,7 +11,7 @@ agent:
 ```
 
 Each provider owns its own runtime contract. Kimi reads `agent.kimi_api_key`
-from `user_data/config.yml` or `KIMI_API_KEY` from the process environment,
+from the active config file or `KIMI_API_KEY` from the process environment,
 uses `user_data/kimi_code_home/config.toml` as the template, replaces the
 `${KIMI_API_KEY}` placeholder, writes the final config to
 `~/.kimi-code/config.toml`, and runs `kimi --prompt`.
