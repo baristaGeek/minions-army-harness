@@ -1,21 +1,15 @@
 # Minions Army Harness
 
-A small, Slack-first agent harness for **responsible vibe-coding**. Send it a plain-English request
-("add a dark theme to the app", "add a merchant column to the recent transactions table") and it turns
-that into a spec, writes the code in an isolated sandbox, opens a pull request, reviews it
-adversarially, and — if you let it — deploys. No one has to learn a CLI or touch a coding agent
-directly.
+A small, Slack-first agent harness for **responsible vibe-coding**. 
 
-It's a miniature, self-hostable take on the "fleet of coding minions" idea, built around Clean
-Architecture (FastAPI API, application services, domain models, pluggable infrastructure).
+Send it a plain-English request ("add a dark theme to the app", "add a merchant column to the recent transactions table") and it turns that into a spec, writes the code in an isolated sandbox, opens a pull request, reviews it adversarially, and — if you let it — deploys. No one has to learn a CLI or touch a coding agent directly. It's a miniature, self-hostable take on the "fleet of coding minions" idea.
 
 ## Getting started
 
-There are three tiers — go as deep as you want.
+### Tier 1 — run it locally
 
-### Tier 1 — local demo (~10 min, no Fly, no Slack)
-You need only two things: an **Anthropic API key** and a **GitHub token** for a repo you own (fork this
-one — the minion works against the bundled [`sample-app/`](sample-app/)).
+You need an **Anthropic API key** and a **GitHub token** for a repo you own (fork this one — the
+minion works against the bundled [`sample-app/`](sample-app/)).
 
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-...
@@ -25,37 +19,72 @@ export REPOSITORY_NAME=your-username/minions-army-harness   # a repo your token 
 docker compose up --build            # boots the API, Postgres, and builds the minion image
 
 # In another shell, fire a request at the webhook:
-curl -X POST http://localhost:8000/api/v1/webhooks/slack/messages \
+curl -X POST http://localhost:8000/api/v1/webhooks/slack/me
   -H "Content-Type: application/json" \
-  -d '{"channel":"C123","user":"U123","text":"add a footer to the sample app","ts":"1.1"}'
+  -d '{"channel":"C123","user":"U123","text":"add a footer .1"}'
 ```
 
-A minion spins up as a local Docker sibling container, runs OpenSpec against your fork, and **opens a
-real pull request**. That's the "it actually works" moment — zero cloud infra beyond one API key and one
-token. It costs real LLM tokens per run and needs a repo you don't mind a bot committing to.
+A minion spins up as a local Docker sibling container, runs OpenSpec against your fork, gates on
+`npm run build`, and **opens a real pull request**. Review ult, so the demo
+stops at the PR. It costs real LLM tokens per run and needs a repo you don't mind a bot committing to.
 
-Config for this path lives in [`user_data/api/config.yml`](user_data/api/config.yml) (read by the API)
-and [`user_data/orchestrator/config.yml`](user_data/orchestrator/config.yml) (read inside the minion).
+Config lives in `user_data/api/config.yml` (read by the API) and `user_data/orchestrator/config.yml`
+(read inside the minion).
 
-### Tier 2 — run it for real
-Switch `launcher.backend` to `fly_machines`, create a Fly app + Slack app, set the secrets, enable the
-reviewer, and point it at your own repo. See [`docs/CONFIGURATION.md`](docs/CONFIGURATION.md) and
-[`QUICKSTART.md`](QUICKSTART.md). This is the production path — the appendix, not the hero.
+### Tier 2 — run it in the cloud
+
+Two Fly apps: the API (`fly.toml`) and one that owns the miphemeral
+machines (`fly.minion.toml`).
+
+```bash
+fly apps create minions-army
+fly apps create minions-army-minion
+
+# 1. Build and push the minion image. --image-label must match launcher.image below.
+fly deploy --config fly.minion.toml --remote-only --build-oatest
+
+# 2. Edit user_data/api/config.yml — baked into the API imaoy:
+#    launcher:
+#      backend: fly_machines
+#      image: registry.fly.io/minions-army-minion:latest
+#      fly_machine_app: minions-army-minion   # hosts the e
+#      fly_app: <the app you deploy>          # required when deploy.mode is flyctl
+#      fly_api_token: ${FLY_API_TOKEN}        # no env fall
+#    repository.name + verification.command/cwd -> your repo
+#    reviewer.enabled: true
+#    deploy.mode: flyctl
+#    slack.allowed_channel_id: <channel the bot listens to>
+
+# 3. Secrets fill the ${VAR} placeholders.
+fly secrets set --app minions-army \
+  DATABASE_URL=postgres://...  ANTHROPIC_API_KEY=sk-ant-...
+  SLACK_BOT_TOKEN=xoxb-...  FLY_API_TOKEN=$(fly tokens create deploy)
+
+# 4. Deploy, then migrate (fly.toml has no release_command).
+fly deploy --config fly.toml --remote-only
+fly ssh console --app minions-army -C "alembic upgrade head"
+```
+
+Then create a Slack app: point **Event Subscriptions** at
+`https://minions-army.fly.dev/api/v1/webhooks/slack/messages` (the endpoint echoes Slack's
+`challenge`), subscribe to `app_mention`, and give the bot ly in-thread.
+There is no signing-secret check, so `slack.allowed_channel_id` is the gate.
+
+Every message now gets its own ephemeral Fly Machine, created on receipt and destroyed on exit.
 
 ## Configuration
 
-Everything is driven by one YAML file (env vars fill `${VAR}` placeholders at load time). Start from
-[`config_examples/minimal.yml`](config_examples/minimal.yml) or the provider examples under
-`config_examples/`. Key knobs:
+One YAML file per process, with `${VAR}` placeholders filled from the environment at load time. Both
+ship working defaults; to start from scratch, `cp config_exta/api/config.yml`
+(that path is the one the loader reads — override with `MINIONS_CONFIG_PATH`). Key knobs:
 
 | Field | What it controls |
 |-------|------------------|
-| `agent.provider_class` | `claude` / `codex` / `kimi`, or the `fallback` chain across all three |
-| `launcher.backend` | `docker` (local sibling) or `fly_machines` (ephemeral Fly VM) |
-| `reviewer.enabled` | Adversarial review + auto-merge/deploy gate (off by default) |
-| `deploy.mode` | `none` / `github_actions` / `flyctl` |
-
-```
+| `agent.provider_class` | `claude` / `codex` / `kimi`, or the `fallback` chain across all three (the default) |
+| `launcher.backend` | `docker` (local sibling container) ol Fly VM) |
+| `reviewer.enabled` | Adversarial review + auto-merge/deploy gate (**off by default**) |
+| `reviewer.engine` | `claude_cli` (default), `agent` (inheor `dspy` |
+| `deploy.mode` | `none` (default), `flyctl`, or `github_actions` (delegates — you supply the workflow) |
 
 ## Development
 
