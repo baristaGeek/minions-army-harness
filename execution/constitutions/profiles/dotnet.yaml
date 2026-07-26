@@ -1,0 +1,10 @@
+language: dotnet
+version: latest
+formatter: dotnet-format
+linter: roslynator
+testing_framework: xunit
+coverage_tool: coverlet
+minimum_coverage: 80
+static_analysis: roslyn
+package_manager: nuget
+dependency_file: *.csproj

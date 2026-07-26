@@ -1,0 +1,10 @@
+language: nodejs
+version: latest
+formatter: prettier
+linter: eslint
+testing_framework: vitest
+coverage_tool: c8
+minimum_coverage: 80
+static_analysis: eslint
+package_manager: npm
+dependency_file: package-lock.json

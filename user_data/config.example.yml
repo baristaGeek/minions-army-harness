@@ -1,0 +1,55 @@
+app:
+  name: minions-army
+  environment: development
+  debug: false
+
+database:
+  url: postgresql+asyncpg://user:password@localhost:5432/minions_army
+  sync_url:
+
+slack:
+  allowed_channel_id:
+  bot_token:
+
+repository:
+  name:
+  base_branch: main
+  feature_branch: feature/minion-task
+  github_token:
+
+agent:
+  provider_class: user_data.agent_providers.claude.ClaudeAgentProvider
+  anthropic_api_key:
+  openai_api_key:
+  kimi_api_key:
+
+workflow:
+  steps_provider_class: user_data.pipeline_steps.openspec.OpenSpecPipelineStepsProvider
+  constitution_depth: standard
+
+launcher:
+  # backend: docker runs each minion as a local sibling container (Tier 1).
+  # backend: fly_machines runs each minion as an ephemeral Fly Machine (Tier 2).
+  backend: docker
+  image: minions-army-minion:latest
+  # Tier 2 (Fly) only:
+  fly_machine_app:
+  fly_app:
+  fly_region: fra
+  fly_api_token:
+  fly_vm_memory: 2048
+  fly_vm_cpus: 2
+
+verification:
+  command:
+  cwd: .
+
+reviewer:
+  enabled: false
+  model: claude-haiku-4-5
+  engine: claude_cli
+  compiled_path:
+
+deploy:
+  # none | github_actions | flyctl
+  mode: none

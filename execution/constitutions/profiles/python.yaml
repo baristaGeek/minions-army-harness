@@ -1,0 +1,10 @@
+language: python
+version: latest
+formatter: black
+linter: ruff
+testing_framework: pytest
+coverage_tool: coverage.py
+minimum_coverage: 80
+static_analysis: mypy
+package_manager: uv
+dependency_file: pyproject.toml

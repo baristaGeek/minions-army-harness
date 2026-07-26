@@ -1,0 +1,32 @@
+app:
+  name: minions-army
+  environment: production
+
+database:
+  url: postgresql+asyncpg://user:password@host:5432/minions_army
+  sync_url:
+
+repository:
+  name: owner/repo
+  base_branch: main
+  feature_branch: feature/minion-task
+  github_token: ghp_your_github_token
+
+agent:
+  provider_class: user_data.agent_providers.codex.CodexAgentProvider
+  openai_api_key: sk-your-openai-key
+
+workflow:
+  steps_provider_class: user_data.pipeline_steps.openspec.OpenSpecPipelineStepsProvider
+  constitution_depth: standard
+
+launcher:
+  backend: fly_machines
+  image: registry.fly.io/minions-army-minion:latest
+  fly_machine_app: minions-army-minion
+  fly_app: minions-army
+  fly_region: fra
+  fly_api_token: fly_your_token
+
+deploy:
+  mode: none

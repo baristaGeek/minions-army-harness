@@ -1,0 +1,53 @@
+// Prisma schema for the Personal Finance Tracker sample app.
+// Type fields are plain strings (validated in app code) to keep migrations simple.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id           String        @id @default(cuid())
+  name         String        @unique
+  type         String // checking | savings | credit_card
+  createdAt    DateTime      @default(now())
+  transactions Transaction[]
+}
+
+model Category {
+  id           String        @id @default(cuid())
+  name         String        @unique
+  type         String // income | expense
+  createdAt    DateTime      @default(now())
+  transactions Transaction[]
+  budget       Budget?
+}
+
+model Transaction {
+  id          String   @id @default(cuid())
+  description String
+  amount      Decimal  @db.Decimal(12, 2)
+  date        DateTime
+  type        String // income | expense
+  accountId   String
+  account     Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@index([accountId])
+  @@index([categoryId])
+  @@index([date])
+}
+
+model Budget {
+  id         String   @id @default(cuid())
+  categoryId String   @unique
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  amount     Decimal  @db.Decimal(12, 2)
+  createdAt  DateTime @default(now())
+}

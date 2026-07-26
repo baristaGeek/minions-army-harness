@@ -1,0 +1,42 @@
+name: Sample App Build
+
+# Guards the baseline the minions clone. A broken sample-app on `main` (e.g. a
+# source file missing from the checkout) fails every minion at the build gate,
+# so we compile it here before it can reach `main`.
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'sample-app/**'
+      - '.github/workflows/sample-app-build.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'sample-app/**'
+      - '.github/workflows/sample-app-build.yml'
+
+jobs:
+  build:
+    name: Build sample-app
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sample-app
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: sample-app/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Mirrors the minion's verify gate: `prisma generate && next build`.
+      # The DB-backed pages use `export const dynamic = "force-dynamic"`, so no
+      # DATABASE_URL is needed at build time.
+      - name: Build
+        run: npm run build

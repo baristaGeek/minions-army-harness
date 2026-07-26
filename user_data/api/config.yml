@@ -1,0 +1,47 @@
+# Config read by the API container (mounted in docker-compose.yml).
+# Tier 1 (local): this runs the minion against LOCAL Docker — no Fly, no Slack.
+# Values of the form ${VAR} are filled from the environment at load time.
+app:
+  name: minions-army
+  environment: development
+
+database:
+  url: ${DATABASE_URL}
+
+slack:
+  # Blank = accept any channel (lets the demo curl through). Set a channel ID to
+  # restrict; set bot_token to have the bot post progress replies back to Slack.
+  allowed_channel_id:
+  bot_token: ${SLACK_BOT_TOKEN}
+
+repository:
+  # The repo the minion clones and opens a PR against. Must be one your
+  # GITHUB_TOKEN can push to (your own fork). Set it via the REPOSITORY_NAME env.
+  name: ${REPOSITORY_NAME}
+  base_branch: main
+  feature_branch: feature/minion-task
+  github_token: ${GITHUB_TOKEN}
+
+agent:
+  # Fallback chain Claude -> Codex -> Kimi. Unconfigured providers are skipped,
+  # so only ANTHROPIC_API_KEY is required; add the others for resilience. Set
+  # provider_class to a single provider (e.g. ...claude.ClaudeAgentProvider) to pin one.
+  provider_class: user_data.agent_providers.fallback.FallbackAgentProvider
+  anthropic_api_key: ${ANTHROPIC_API_KEY}
+  openai_api_key: ${OPENAI_API_KEY}
+  kimi_api_key: ${KIMI_API_KEY}
+
+workflow:
+  steps_provider_class: user_data.pipeline_steps.openspec.OpenSpecPipelineStepsProvider
+  constitution_depth: standard
+
+launcher:
+  backend: docker
+  image: minions-army-minion:latest
+
+reviewer:
+  enabled: false
+  engine: claude_cli
+
+deploy:
+  mode: none

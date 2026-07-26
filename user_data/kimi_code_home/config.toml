@@ -1,0 +1,16 @@
+# ~/.kimi-code/config.toml
+# Runtime settings for Kimi Code.
+# This file starts empty so built-in defaults can apply.
+# Login will populate managed Kimi provider and model entries.
+default_model = "kimi-k2.7-code"
+default_permission_mode = "yolo"
+
+[providers.moonshot]
+type = "openai"
+base_url = "https://api.moonshot.ai/v1"
+api_key = "${KIMI_API_KEY}"
+
+[models."kimi-k2.7-code"]
+provider = "moonshot"
+model = "kimi-k2.7-code"
+max_context_size = 131072

@@ -1,0 +1,10 @@
+language: angular
+version: latest
+formatter: prettier
+linter: eslint
+testing_framework: karma
+coverage_tool: nyc
+minimum_coverage: 80
+static_analysis: typescript
+package_manager: npm
+dependency_file: package-lock.json

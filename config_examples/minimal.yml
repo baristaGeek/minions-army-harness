@@ -1,0 +1,15 @@
+app:
+  name: minions-army
+
+repository:
+  name: owner/repo
+
+agent:
+  provider_class: user_data.agent_providers.claude.ClaudeAgentProvider
+  anthropic_api_key: sk-ant-your-anthropic-key
+
+workflow:
+  steps_provider_class: user_data.pipeline_steps.openspec.OpenSpecPipelineStepsProvider
+
+launcher:
+  backend: docker

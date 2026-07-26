@@ -1,0 +1,26 @@
+# fly.toml for the finance sample app.
+# Rename `app` to your own Fly app before deploying (Tier 2).
+# Deploy from this directory:  fly deploy
+# (see README.md for first-time setup: app creation + Postgres attach)
+
+app = 'your-finance-sample'
+primary_region = 'fra'
+
+[build]
+
+[deploy]
+  # Apply migrations and (idempotently) seed on every release.
+  release_command = 'npm run release'
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ['app']
+
+[[vm]]
+  memory = '512mb'
+  cpu_kind = 'shared'
+  cpus = 1

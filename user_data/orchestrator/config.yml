@@ -1,0 +1,40 @@
+# Config read INSIDE the minion container (Dockerfile.minion sets
+# MINIONS_CONFIG_PATH to this file). The launcher injects the env vars below.
+app:
+  name: minions-army
+
+database:
+  url: ${DATABASE_URL}
+
+repository:
+  name: ${REPOSITORY_NAME}
+  base_branch: main
+  feature_branch: feature/minion-task
+  github_token: ${GITHUB_TOKEN}
+
+agent:
+  # Fallback chain Claude -> Codex -> Kimi; unconfigured providers are skipped.
+  provider_class: user_data.agent_providers.fallback.FallbackAgentProvider
+  anthropic_api_key: ${ANTHROPIC_API_KEY}
+  openai_api_key: ${OPENAI_API_KEY}
+  kimi_api_key: ${KIMI_API_KEY}
+
+workflow:
+  steps_provider_class: user_data.pipeline_steps.openspec.OpenSpecPipelineStepsProvider
+  constitution_depth: standard
+
+# The build gate the minion runs before opening a PR. Points at the bundled
+# sample-app; change to match your target repo.
+verification:
+  command: npm ci && npm run build
+  cwd: sample-app
+
+launcher:
+  backend: docker
+
+reviewer:
+  enabled: false
+  engine: claude_cli
+
+deploy:
+  mode: none

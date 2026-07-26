@@ -1,0 +1,44 @@
+# Example: Kimi (Moonshot) provider, local Docker backend.
+app:
+  name: minions-army
+  environment: development
+
+database:
+  url: ${DATABASE_URL}
+
+slack:
+  allowed_channel_id:
+  bot_token: ${SLACK_BOT_TOKEN}
+
+repository:
+  name: ${REPOSITORY_NAME}
+  base_branch: main
+  feature_branch: feature/minion-task
+  github_token: ${GITHUB_TOKEN}
+
+agent:
+  provider_class: user_data.agent_providers.kimi.KimiAgentProvider
+  anthropic_api_key: ${ANTHROPIC_API_KEY}
+  openai_api_key: ${OPENAI_API_KEY}
+  kimi_api_key: ${KIMI_API_KEY}
+
+workflow:
+  steps_provider_class: user_data.pipeline_steps.openspec.OpenSpecPipelineStepsProvider
+  constitution_depth: standard
+
+launcher:
+  backend: docker
+  image: minions-army-minion:latest
+
+verification:
+  command: npm ci && npm run build
+  cwd: sample-app
+
+reviewer:
+  enabled: false
+  model: kimi-k2
+  engine: dspy
+  compiled_path:
+
+deploy:
+  mode: none

@@ -1,0 +1,50 @@
+services:
+  api:
+    build: .
+    container_name: minions-army-api
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://minions_user:minions_pass@db:5432/minions_army
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+      - REPOSITORY_NAME=${REPOSITORY_NAME:-}
+      - SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN:-}
+    depends_on:
+      db:
+        condition: service_healthy
+      minion-image:
+        condition: service_completed_successfully
+    volumes:
+      - ./minions_army:/app/minions_army
+      - ./user_data/api/config.yml:/app/user_data/api/config.yml:ro
+      - ./alembic:/app/alembic
+      - ./alembic.ini:/app/alembic.ini
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: sh -c "alembic upgrade head && uvicorn minions_army.infrastructure.api.fastapi_app:app --host 0.0.0.0 --port 8000 --reload"
+
+  minion-image:
+    build:
+      context: .
+      dockerfile: Dockerfile.minion
+    image: minions-army-minion:latest
+    command: ["true"]
+
+  db:
+    image: postgres:16-alpine
+    container_name: minions-army-db
+    environment:
+      - POSTGRES_USER=minions_user
+      - POSTGRES_PASSWORD=minions_pass
+      - POSTGRES_DB=minions_army
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./data/postgress:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U minions_user -d minions_army"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s

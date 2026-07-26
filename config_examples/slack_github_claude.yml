@@ -1,0 +1,32 @@
+app:
+  name: minions-army
+  environment: production
+
+slack:
+  allowed_channel_id: C1234567890
+  bot_token: xoxb-your-slack-bot-token
+
+repository:
+  name: owner/repo
+  base_branch: main
+  feature_branch: feature/minion-task
+  github_token: ghp_your_github_token
+
+agent:
+  provider_class: user_data.agent_providers.claude.ClaudeAgentProvider
+  anthropic_api_key: sk-ant-your-anthropic-key
+
+workflow:
+  steps_provider_class: user_data.pipeline_steps.openspec.OpenSpecPipelineStepsProvider
+  constitution_depth: standard
+
+launcher:
+  backend: docker
+  image: minions-army-minion:latest
+
+reviewer:
+  enabled: false
+  engine: claude_cli
+
+deploy:
+  mode: none

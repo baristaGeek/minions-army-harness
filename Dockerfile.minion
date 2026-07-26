@@ -1,0 +1,66 @@
+FROM python:3.13-slim
+
+WORKDIR /app
+ENV HOME=/root
+ENV PYTHONPATH="/app:${PYTHONPATH}"
+ENV MINIONS_CONFIG_PATH=user_data/orchestrator/config.yml
+
+ARG SPEC_KIT_REF=v0.12.4
+ARG CLAUDE_CODE_VERSION=2.1.206
+ARG CODEX_VERSION=0.144.6
+ARG KIMI_CODE_VERSION=0.28.1
+ARG OPENSPEC_VERSION=1.6.0
+
+# Base OS tools used by git workflows, CLI installers, and GitHub/Fly operations.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    git \
+    gnupg \
+    nodejs \
+    npm \
+    && rm -rf /var/lib/apt/lists/*
+
+# GitHub CLI.
+RUN mkdir -p -m 755 /etc/apt/keyrings \
+    && curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+        -o /etc/apt/keyrings/githubcli-archive-keyring.gpg \
+    && chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+        > /etc/apt/sources.list.d/github-cli.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends gh \
+    && rm -rf /var/lib/apt/lists/*
+
+# Fly CLI (flyctl) so the minion can deploy the target app after review/merge.
+RUN curl -L https://fly.io/install.sh | sh
+
+# Agent and workflow CLIs distributed through npm.
+RUN npm install -g \
+    "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}" \
+    "@openai/codex@${CODEX_VERSION}" \
+    "@moonshot-ai/kimi-code@${KIMI_CODE_VERSION}" \
+    "@fission-ai/openspec@${OPENSPEC_VERSION}"
+
+# Python CLI tools.
+RUN pip install --no-cache-dir uv \
+    && uv tool install specify-cli --from "git+https://github.com/github/spec-kit.git@${SPEC_KIT_REF}"
+
+ENV PATH="/root/.fly/bin:/root/.local/bin:${PATH}"
+
+COPY pyproject.toml ./
+COPY minions_army ./minions_army
+RUN pip install --no-cache-dir .
+COPY user_data ./user_data
+
+# Ship the evals dir so an optimized reviewer artifact (compiled_reviewer.json)
+# is available when MINION_REVIEWER_ENGINE=dspy and MINION_REVIEWER_COMPILED_PATH
+# points here. Missing artifact is fine — the reviewer falls back to zero-shot.
+COPY evals /opt/minions-army/evals
+
+COPY execution/prompts /opt/minions-army/execution/prompts
+COPY execution/constitutions /opt/minions-army/execution/constitutions
+RUN find /opt/minions-army/execution/prompts -type f -name '*.md' -exec sed -i 's/\r$//' {} +
+RUN find /opt/minions-army/execution/constitutions -type f \( -name '*.md' -o -name '*.yaml' -o -name '*.yml' \) -exec sed -i 's/\r$//' {} +
+
+CMD ["minion-orchestrator", "--config", "user_data/orchestrator/config.yml"]

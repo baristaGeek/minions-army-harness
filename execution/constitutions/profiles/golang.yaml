@@ -1,0 +1,10 @@
+language: go
+version: latest
+formatter: gofmt
+linter: golangci-lint
+testing_framework: go test
+coverage_tool: go tool cover
+minimum_coverage: 80
+static_analysis: govet
+package_manager: go modules
+dependency_file: go.mod

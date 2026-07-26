@@ -1,0 +1,22 @@
+app:
+  name: test-app
+  environment: production
+  debug: true
+database:
+  url: sqlite+aiosqlite:///./runtime.db
+  sync_url: sqlite:///./runtime.db
+repository:
+  name: owner/repo
+  base_branch: main
+  feature_branch: feature/test
+  github_token: ${GITHUB_TOKEN}
+agent:
+  provider_class: user_data.agent_providers.claude.ClaudeAgentProvider
+  anthropic_api_key: ${ANTHROPIC_API_KEY}
+workflow:
+  steps_provider_class: user_data.pipeline_steps.openspec.OpenSpecPipelineStepsProvider
+  constitution_depth: professional
+launcher:
+  backend: fly_machines
+  image: registry.fly.io/minions-army-minion:latest
+  fly_machine_app: minions-army-minion

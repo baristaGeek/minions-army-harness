@@ -1,0 +1,24 @@
+# Fly config for the minion app and registry namespace.
+#
+# This app owns:
+# - the machine host app: `minions-army-minion`
+# - the registry path: `registry.fly.io/minions-army-minion`
+#
+# Example usage:
+#   flyctl apps create minions-army-minion
+#   flyctl deploy --config fly.minion.toml --remote-only
+
+app = "minions-army-minion"
+primary_region = "fra"
+
+[build]
+  dockerfile = "Dockerfile.minion"
+
+[env]
+  HOME = "/root"
+
+[[vm]]
+  memory = "2gb"
+  cpu_kind = "shared"
+  cpus = 2
+  memory_mb = 2048

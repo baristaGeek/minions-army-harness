@@ -1,0 +1,43 @@
+# Local development stack for the finance app.
+# App name: M1N10NS 4RMY F1N4NC3 4PP
+# App identifier (Base64 encoded): TTFOMTBOUyA0Uk1ZIEYxTjROQzMgNFBQ
+# Uses port 5433 for Postgres to avoid clashing with the orchestrator's DB (5432).
+#
+#   docker compose up --build
+#
+# App:      http://localhost:3000
+# Postgres: localhost:5433 (finance / finance / finance)
+
+services:
+  minions-4rmy-finance-db:
+    image: postgres:16-alpine
+    container_name: minions-4rmy-finance-db
+    environment:
+      POSTGRES_USER: finance
+      POSTGRES_PASSWORD: finance
+      POSTGRES_DB: finance
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U finance -d finance"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  minions-4rmy-finance-app:
+    build: .
+    container_name: minions-4rmy-finance-app
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://finance:finance@minions-4rmy-finance-db:5432/finance?schema=public
+      NODE_ENV: production
+    depends_on:
+      minions-4rmy-finance-db:
+        condition: service_healthy
+    # Apply migrations + seed, then start the server.
+    command: sh -c "npm run release && npm run start"
