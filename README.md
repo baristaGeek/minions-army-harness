@@ -9,28 +9,9 @@ directly.
 It's a miniature, self-hostable take on the "fleet of coding minions" idea, built around Clean
 Architecture (FastAPI API, application services, domain models, pluggable infrastructure).
 
-## How it works
-
-1. **A message comes in** — via the Slack webhook (or the generic Web API endpoint).
-2. **A minion is spawned** in an isolated sandbox: a **local Docker sibling container** (Tier 1) or an
-   **ephemeral Fly Machine** (Tier 2) that is destroyed when the run ends.
-3. **The agent runs [OpenSpec](https://github.com/Fission-AI/OpenSpec)** — a lightweight
-   spec-driven-development flow — to disambiguate the request into a concrete spec, then implement it.
-   Providers fall back **Claude → Codex → Kimi**, so one outage or empty credit balance doesn't stop the run.
-4. **A PR is opened, then reviewed adversarially.** LLMs are sycophantic and poor at judging their own
-   work, so a separate reviewer agent grades the PR. Both writer and reviewer share an
-   [engineering constitution](CONSTITUTION.md) that forbids destructive operations (no `DROP TABLE`,
-   no unconditional `DELETE`, additive-and-reversible migrations only).
-5. **Ship or flag.** With the reviewer enabled, an approved PR can auto-merge and deploy; otherwise the
-   PR is left for a human. (Both are **off by default** — the demo just opens a PR.)
-
 ## Getting started
 
 There are three tiers — go as deep as you want.
-
-### Tier 0 — just read it
-Most people who star an infra repo never run it. Read [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and
-steal the patterns. That's a perfectly good outcome.
 
 ### Tier 1 — local demo (~10 min, no Fly, no Slack)
 You need only two things: an **Anthropic API key** and a **GitHub token** for a repo you own (fork this
@@ -74,19 +55,6 @@ Everything is driven by one YAML file (env vars fill `${VAR}` placeholders at lo
 | `reviewer.enabled` | Adversarial review + auto-merge/deploy gate (off by default) |
 | `deploy.mode` | `none` / `github_actions` / `flyctl` |
 
-## Project layout
-
-```text
-minions_army/
-  cli/              minion-orchestrator entrypoint
-  application/      use cases + orchestration services
-  domain/           domain models, repository contracts
-  infrastructure/   API, persistence, launchers, reviewers
-user_data/          your config + pluggable agent providers & pipeline steps
-config_examples/    example YAML configs
-execution/          prompts + engineering constitutions
-sample-app/         bundled Next.js app the demo minion edits
-docs/               architecture, configuration, development
 ```
 
 ## Development
@@ -97,6 +65,23 @@ ruff check minions_army tests
 mypy minions_army
 pytest
 ```
+
+## How it works
+
+1. **A message comes in** — via the Slack webhook (or the generic Web API endpoint).
+2. **A minion is spawned** in an isolated sandbox: a **local Docker sibling container** (Tier 1) or an
+   **ephemeral Fly Machine** (Tier 2) that is destroyed when the run ends.
+3. **The agent runs [OpenSpec](https://github.com/Fission-AI/OpenSpec)** — a lightweight
+   spec-driven-development flow — to disambiguate the request into a concrete spec, then implement it.
+   Providers fall back **Claude → Codex → Kimi**, so one outage or empty credit balance doesn't stop the run.
+4. **A PR is opened, then reviewed adversarially.** LLMs are sycophantic and poor at judging their own
+   work, so a separate reviewer agent grades the PR. Both writer and reviewer share an
+   [engineering constitution](CONSTITUTION.md) that forbids destructive operations (no `DROP TABLE`,
+   no unconditional `DELETE`, additive-and-reversible migrations only).
+5. **Ship or flag.** With the reviewer enabled, an approved PR can auto-merge and deploy; otherwise the
+   PR is left for a human. (Both are **off by default** — the demo just opens a PR.)
+
+
 
 See [`CONTRIBUTING.md`](CONTRIBUTING.md) before opening a PR.
 
