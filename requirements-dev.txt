@@ -3,6 +3,11 @@ pytest>=7.4.0
 pytest-cov>=4.1.0
 pytest-asyncio>=0.21.0
 httpx2>=2.5.0
-ruff>=0.1.0
-black>=23.0.0
-mypy>=1.5.0
+# Formatter, linter and type-checker versions are pinned deliberately. CI gates
+# on `black --check` and `ruff check`, and these tools change their output between
+# releases: with an open range, a new upstream release turns `main` red with no
+# code change at all, and the next contributor inherits a failure they did not
+# cause. Bump these on purpose, in their own PR, with the reformat included.
+ruff==0.16.0
+black==26.5.1
+mypy==2.3.0
