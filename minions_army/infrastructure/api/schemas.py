@@ -144,5 +144,3 @@ class WebAPIWebhookRequest(BaseModel):
             user_id=self.user_id,
             raw_payload=self.model_dump(mode="json"),
         )
-
-

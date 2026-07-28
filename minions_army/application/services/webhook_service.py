@@ -60,9 +60,7 @@ class WebAPIMessageInput:
 class MinionTaskRunner(Protocol):
     """Runs containers for persisted webhook messages."""
 
-    def run_for_message(
-        self, message: SlackMessage | WebAPIMessage
-    ) -> None:
+    def run_for_message(self, message: SlackMessage | WebAPIMessage) -> None:
         """Start a container using the webhook message as input."""
         ...
 
